@@ -1,7 +1,21 @@
 const DB = require('../config')
 
 async function employee(ctx) {
-    await DB.select('*').from('employee').then(res => {
+    await DB.select('employee.*', 'shop.shopname', 'role.name as rolename').from('employee').leftJoin('shop', 'employee.shop', 'shop.id').leftJoin('role', 'employee.role', 'role.id').then(res => {
+        ctx.state.code = 0000;
+        ctx.state.data = res;
+    })
+}
+async function employeebyid(ctx) {
+    const query = ctx.request.body;
+    const id = query.id;
+    await DB.select('*').from('employee').where('id', id).then(res => {
+        ctx.state.code = 0000;
+        ctx.state.data = res;
+    })
+}
+async function roles(ctx) {
+    await DB.select('*').from('role').then(res => {
         ctx.state.code = 0000;
         ctx.state.data = res;
     })
@@ -9,7 +23,7 @@ async function employee(ctx) {
 async function employeebyshopid(ctx) {
     const query = ctx.request.body;
     const id = query.id;
-    await DB.select('*').from('employee').where('shop',id).then(res => {
+    await DB.select('*').from('employee').where('shop', id).then(res => {
         ctx.state.code = 0000;
         ctx.state.data = res;
     })
@@ -46,6 +60,16 @@ async function editemployee(ctx) {
         })
     }
 }
+async function resetpass(ctx) {
+    const query = ctx.request.body;
+    const id = query.id;
+    await DB('employee').update({
+        'password': '123456'
+    }).then(res => {
+        ctx.state.msg = "修改成功";
+        ctx.state.data = res;
+    })
+}
 async function delemployee(ctx) {
     const query = ctx.request.body;
     const id = query.id;
@@ -58,7 +82,7 @@ async function delemployee(ctx) {
 async function checkshopemployee(ctx) {
     const query = ctx.request.body;
     const id = query.id;
-    await DB.from('employee').innerJoin('shop', 'employee.shop', 'shop.id').where('employee.shop',id).then(res => {
+    await DB.from('employee').innerJoin('shop', 'employee.shop', 'shop.id').where('employee.shop', id).then(res => {
         ctx.state.data = res;
     })
 }
@@ -68,5 +92,8 @@ module.exports = {
     editemployee,
     delemployee,
     checkshopemployee,
-    employeebyshopid
+    employeebyshopid,
+    employeebyid,
+    roles,
+    resetpass
 }

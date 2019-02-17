@@ -34,4 +34,9 @@ router.post('/employeebyshopid',controllers.employee.employeebyshopid)
 router.post('/editemployee', controllers.employee.editemployee)//门店编辑\创建
 router.post('/delemployee', controllers.employee.delemployee)//门店删除
 router.post('/checkshopemployee',controllers.employee.checkshopemployee)
+router.post('/employeebyid',controllers.employee.employeebyid)
+router.get('/roles',controllers.employee.roles)
+router.post('/resetpass',controllers.employee.resetpass)
+
+
 module.exports = router

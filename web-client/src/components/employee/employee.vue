@@ -5,20 +5,20 @@
         <div class="page-title" id="vip-title">员工管理</div>
       </el-col>
       <el-col :span="14">
-        <el-button type="primary" style="float:right;margin-right:10px" @click="creategood">添加员工</el-button>
+        <el-button type="primary" style="float:right;margin-right:10px" @click="createEm">添加员工</el-button>
       </el-col>
     </el-row>
     <div class="bills-wrapper">
       <el-table :data="tableData" stripe style="width: 100%">
         <el-table-column label="员工姓名" prop="name"></el-table-column>
         <el-table-column label="员工电话" prop="tel"></el-table-column>
-        <el-table-column label="所属门店" prop="shop"></el-table-column>
-        <el-table-column label="员工角色" prop="role"></el-table-column>
+        <el-table-column label="所属门店" prop="shopname"></el-table-column>
+        <el-table-column label="员工角色" prop="rolename"></el-table-column>
         <el-table-column label="登陆用户名" prop="username"></el-table-column>
-        <el-table-column label="操作" width="150">
+        <el-table-column label="操作" width="250">
           <template slot-scope="scope">
             <el-button type="primary" size="small" @click="editemployee(scope.row.id)">编辑</el-button>
-            <el-button type="success" size="small" @click="editemployee(scope.row.id)">重置登陆密码</el-button>
+            <el-button type="success" size="small" @click="resetPass(scope.row.id)">重置登陆密码</el-button>
             <el-button type="danger" size="small" @click="delemployee(scope.row.id)">删除</el-button>
           </template>
         </el-table-column>
@@ -31,7 +31,7 @@
         </el-form-item>
         <el-form-item label="所属门店" prop="shop">
           <el-select v-model="createForm.shop" placeholder="请选择门店">
-            <el-option v-for="item in shops" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            <el-option v-for="item in shops" :key="item.id" :label="item.shopname" :value="item.id"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="员工角色" prop="role">
@@ -55,7 +55,7 @@
         </el-form-item>
         <el-form-item label="所属门店" prop="shop">
           <el-select v-model="editForm.shop" placeholder="请选择门店">
-            <el-option v-for="item in shops" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            <el-option v-for="item in shops" :key="item.id" :label="item.shopname" :value="item.id"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="员工角色" prop="role">
@@ -83,7 +83,8 @@ export default {
       tableData: [],
       dialogVisible: false,
       dialogVisible2: false,
-      classes: [],
+      shops: [],
+      roles: [],
       createForm: {
         name: "",
         tel: "",
@@ -104,22 +105,23 @@ export default {
           {
             required: true,
             message: "请选择员工角色",
-            trigger: "blur"
-          }
-        ],
-        price: [
-          {
-            required: true,
-            message: "请输入商品单价",
-            trigger: "blur"
-          }
-        ],
-        class: [
-          {
-            required: true,
-            message: "请选择商品分类",
             trigger: "blur",
             type: "number"
+          }
+        ],
+        shop: [
+          {
+            required: true,
+            message: "请输入选择所属门店",
+            trigger: "blur",
+            type: "number"
+          }
+        ],
+        username: [
+          {
+            required: true,
+            message: "请设置登陆用户名",
+            trigger: "blur"
           }
         ]
       }
@@ -127,7 +129,8 @@ export default {
   },
   mounted() {
     this.refreshData();
-    this.getClasses();
+    this.getShops();
+    this.getRoles();
   },
   created() {
     if (!window.sessionStorage.getItem("userId")) {
@@ -137,33 +140,77 @@ export default {
     }
   },
   methods: {
-    getClasses() {
+    getShops() {
       var that = this;
       that
         .axios({
           method: "get",
-          url: rootPath + "/salesys/classes"
+          url: rootPath + "/salesys/shops"
         })
         .then(res => {
-          that.classes = res.data.data;
+          that.shops = res.data.data;
         });
     },
-    creategood() {
+    getRoles() {
+      var that = this;
+      that
+        .axios({
+          method: "get",
+          url: rootPath + "/salesys/roles"
+        })
+        .then(res => {
+          that.roles = res.data.data;
+        });
+    },
+    resetPass(id) {
+      var that = this;
+
+      that
+        .$confirm("此操作将重置该员工的登陆密码为123456, 是否继续?", "提示", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning"
+        })
+        .then(() => {
+          that
+            .axios({
+              method: "post",
+              url: rootPath + "/salesys/resetpass",
+              data: {
+                id: id
+              }
+            })
+            .then(res => {
+              that.$message({
+                type: "success",
+                message: res.data.msg
+              });
+            });
+        })
+        .catch(() => {
+          that.$message({
+            type: "info",
+            message: "已取消"
+          });
+        });
+    },
+    createEm() {
       var that = this;
       that.createForm = {
         name: "",
-        unit: "",
-        class: "",
-        price: ""
+        tel: "",
+        shop: "",
+        role: "",
+        username: ""
       };
       this.dialogVisible = true;
     },
-    editgood(id) {
+    editemployee(id) {
       var that = this;
       that
         .axios({
           method: "post",
-          url: rootPath + "/salesys/goodbyid",
+          url: rootPath + "/salesys/employeebyid",
           data: {
             id: id
           }
@@ -174,11 +221,10 @@ export default {
       this.dialogVisible2 = true;
     },
 
-    delgood(id) {
+    delemployee(id) {
       var that = this;
-
       that
-        .$confirm("此操作将删除该分类, 是否继续?", "提示", {
+        .$confirm("此操作将删除该员工, 是否继续?", "提示", {
           confirmButtonText: "确定",
           cancelButtonText: "取消",
           type: "warning"
@@ -187,7 +233,7 @@ export default {
           that
             .axios({
               method: "post",
-              url: rootPath + "/salesys/delgood",
+              url: rootPath + "/salesys/delemployee",
               data: {
                 id: id
               }
@@ -214,12 +260,12 @@ export default {
           that
             .axios({
               method: "post",
-              url: rootPath + "/salesys/editgood",
+              url: rootPath + "/salesys/editemployee",
               data: {
                 name: that.createForm.name,
-                unit: that.createForm.unit,
-                class: that.createForm.class,
-                price: that.createForm.price
+                shop: that.createForm.shop,
+                username: that.createForm.username,
+                role: that.createForm.role
               }
             })
             .then(res => {
@@ -231,9 +277,9 @@ export default {
                 that.dialogVisible = false;
                 that.createForm = {
                   name: "",
-                  unit: "",
-                  class: "",
-                  price: ""
+                  shop: "",
+                  role: "",
+                  username: ""
                 };
                 that.refreshData();
               }
@@ -254,9 +300,9 @@ export default {
               data: {
                 id: that.editForm.id,
                 name: that.editForm.name,
-                unit: that.editForm.unit,
-                class: that.editForm.class,
-                price: that.editForm.price
+                shop: that.editForm.shop,
+                username: that.editForm.username,
+                role: that.editForm.role
               }
             })
             .then(res => {
@@ -279,7 +325,7 @@ export default {
       that
         .axios({
           method: "get",
-          url: rootPath + "/salesys/goods"
+          url: rootPath + "/salesys/employee"
         })
         .then(response => {
           that.tableData = response.data.data;
